@@ -40,7 +40,7 @@ def fetch_historical_data():
 # === GraphQL Query Class ===
 class Query(graphene.ObjectType):
     sources = graphene.List(PowerSource, name=graphene.String(required=False))
-    historical_sources = graphene.List(HistoricalSource)
+    historicalSources = graphene.List(HistoricalSource)
 
     def resolve_sources(self, info, name=None):
         data = fetch_latest_data()
