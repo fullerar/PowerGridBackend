@@ -52,7 +52,7 @@ class Query(graphene.ObjectType):
 
         return results
 
-    def resolve_historical_sources(self, info):
+    def resolve_historicalSources(self, info):
         raw_data = fetch_historical_data()
         results = []
 
