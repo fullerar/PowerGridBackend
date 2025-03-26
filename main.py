@@ -10,8 +10,13 @@ import requests
 app = Flask(__name__)
 # Add GraphQL endpoint
 app.add_url_rule(
-    "/graphql",
-    view_func=GraphQLView.as_view("graphql", schema=schema, graphiql=True)
+    '/graphql',
+    view_func=GraphQLView.as_view(
+        'graphql',
+        schema=schema,
+        graphiql=True  # optional, enables browser UI
+    ),
+    methods=['GET', 'POST']
 )
 
 CORS(app)
