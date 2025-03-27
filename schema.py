@@ -39,11 +39,17 @@ def fetch_historical_data():
 
 # === GraphQL Query Class ===
 class Query(graphene.ObjectType):
-    sources = graphene.List(PowerSource, name=graphene.String(required=False))
+    sources = graphene.List(PowerSource, name=graphene.String(required=False), zone=graphene.String(required=False))
     historicalSources = graphene.List(HistoricalSource)
 
-    def resolve_sources(self, info, name=None):
-        data = fetch_latest_data()
+    def resolve_sources(self, info, name=None, zone=None):
+        if not zone:
+            zone = "US-MIDA-PJM"  # fallback
+
+        url = f"https://api.electricitymap.org/v3/power-breakdown/latest?zone={zone}"
+        headers = {"auth-token": "nztSjedCFYMxcA05Odpl"}
+        response = requests.get(url, headers=headers)
+        data = response.json().get('powerConsumptionBreakdown', {})
 
         results = [PowerSource(name=k, power=v) for k, v in data.items()]
 
