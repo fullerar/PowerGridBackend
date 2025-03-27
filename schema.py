@@ -27,9 +27,15 @@ def fetch_historical_data(zone="US-MIDA-PJM"):
     return response.json().get("history", [])
 
 
+class PowerSummary(graphene.ObjectType):
+    sources = graphene.List(PowerSource)
+    totalPowerOutput = graphene.Float()
+
+
 # === GraphQL Query Class ===
 class Query(graphene.ObjectType):
-    sources = graphene.List(PowerSource, name=graphene.String(required=False), zone=graphene.String(required=False))
+    sources = graphene.Field(
+        PowerSummary, name=graphene.String(required=False), zone=graphene.String(required=False))
     historicalSources = graphene.List(HistoricalSource)
 
     def resolve_sources(self, info, name=None, zone=None):
@@ -56,8 +62,11 @@ class Query(graphene.ObjectType):
 
         df = df.sort_values(by="power", ascending=False)
 
+        # Build sorted source list
         results = [PowerSource(name=row["name"], power=row["power"]) for _, row in df.iterrows()]
-        return results
+        total_output = df["power"].sum()
+
+        return PowerSummary(sources=results, totalPowerOutput=total_output)
 
     def resolve_historicalSources(self, info, zone=None):
         if not zone:
