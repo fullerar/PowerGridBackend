@@ -1,6 +1,7 @@
 import datetime
 import requests
 import graphene
+import pandas as pd
 
 
 # === GraphQL Types ===
@@ -33,18 +34,29 @@ class Query(graphene.ObjectType):
 
     def resolve_sources(self, info, name=None, zone=None):
         if not zone:
-            zone = "US-MIDA-PJM"  # fallback
+            zone = "US-MIDA-PJM"
 
         url = f"https://api.electricitymap.org/v3/power-breakdown/latest?zone={zone}"
         headers = {"auth-token": "nztSjedCFYMxcA05Odpl"}
-        response = requests.get(url, headers=headers)
-        data = response.json().get('powerConsumptionBreakdown', {})
 
-        results = [PowerSource(name=k, power=v) for k, v in data.items()]
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            print(f"Error fetching data for zone {zone}: {e}")
+            return []
+
+        data = response.json().get("powerConsumptionBreakdown", {})
+
+        # Create DataFrame and sort
+        df = pd.DataFrame(list(data.items()), columns=["name", "power"])
 
         if name:
-            results = [ps for ps in results if name.lower() in ps.name.lower()]
+            df = df[df["name"].str.lower().str.contains(name.lower())]
 
+        df = df.sort_values(by="power", ascending=False)
+
+        results = [PowerSource(name=row["name"], power=row["power"]) for _, row in df.iterrows()]
         return results
 
     def resolve_historicalSources(self, info, zone=None):
