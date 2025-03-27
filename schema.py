@@ -15,20 +15,9 @@ class HistoricalSource(graphene.ObjectType):
     power = graphene.Float()
 
 
-# === Helper Function: Fetch Latest Data ===
-def fetch_latest_data():
-    url = "https://api.electricitymap.org/v3/power-breakdown/latest?zone=US-MIDA-PJM"
-    headers = {"auth-token": "nztSjedCFYMxcA05Odpl"}
-
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-
-    return response.json().get("powerConsumptionBreakdown", {})
-
-
 # === Helper Function: Fetch Historical Data ===
-def fetch_historical_data():
-    url = f"https://api.electricitymap.org/v3/power-breakdown/history?zone=US-MIDA-PJM"
+def fetch_historical_data(zone="US-MIDA-PJM"):
+    url = f"https://api.electricitymap.org/v3/power-breakdown/history?zone={zone}"
     headers = {"auth-token": "nztSjedCFYMxcA05Odpl"}
 
     response = requests.get(url, headers=headers)
@@ -58,8 +47,11 @@ class Query(graphene.ObjectType):
 
         return results
 
-    def resolve_historicalSources(self, info):
-        raw_data = fetch_historical_data()
+    def resolve_historicalSources(self, info, zone=None):
+        if not zone:
+            zone = "US-MIDA-PJM"
+
+        raw_data = fetch_historical_data(zone)
         results = []
 
         for entry in raw_data:
